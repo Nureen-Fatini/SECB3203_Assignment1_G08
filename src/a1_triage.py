@@ -46,11 +46,14 @@ def classify_variant(row: dict, params: dict) -> tuple[str, str]:
     #Convert text to numbers and clean text
     depth = int(row["depth"])
     quality = int(row["quality"])
-    gene = row["gene"].strip().lower()
-    impact = row["impact"].strip().lower()
+    gene = row["gene"].strip().casefold()
+    impact = row["impact"].strip().casefold()
 
     #Clean priority list from params
-    priority_genes = [g.strip().lower() for g in params["priority_genes"]]
+    priority_genes = {
+        gene_name.strip().casefold()
+        for gene_name in params["priority_genes"]
+    }
 
     #Rule 1: Low depth
     if depth < params["min_depth"]:
@@ -69,7 +72,7 @@ def classify_variant(row: dict, params: dict) -> tuple[str, str]:
         return "prioritize", f"priority gene {gene} with {impact} impact"
 
     #Rule 4: Priority gene + low/modifier impact
-    elif is_priority and not is_high_mod:
+    if is_priority and not is_high_mod:
         return "review", f"priority gene {gene} with {impact} impact"
 
     #Rule 5: Non-priority gene + high/moderate impact
