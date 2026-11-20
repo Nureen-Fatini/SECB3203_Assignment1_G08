@@ -43,7 +43,42 @@ def classify_variant(row: dict, params: dict) -> tuple[str, str]:
     Gene symbols and impact labels are compared after strip() and case folding.
     depth, quality and pos may arrive as text.
     """
-    raise NotImplementedError("TODO: implement classify_variant")
+    #Convert text to numbers and clean text
+    depth = int(row["depth"])
+    quality = int(row["quality"])
+    gene = row["gene"].strip().lower()
+    impact = row["impact"].strip().lower()
+
+    #Clean priority list from params
+    priority_genes = [g.strip().lower() for g in params["priority_genes"]]
+
+    #Rule 1: Low depth
+    if depth < params["min_depth"]:
+        return "exclude", f"depth {depth} below {params['min_depth']}"
+
+    #Rule 2: Low quality
+    if quality < params["min_quality"]:
+        return "exclude", f"quality {quality} below {params['min_quality']}"
+
+    #Check condition firsy for rule 3-6
+    is_priority = gene in priority_genes
+    is_high_mod = impact in ("high", "moderate")
+
+    #Rule 3: Priority gene + high/moderate impact
+    if is_priority and is_high_mod:
+        return "prioritize", f"priority gene {gene} with {impact} impact"
+
+    #Rule 4: Priority gene + low/modifier impact
+    elif is_priority and not is_high_mod:
+        return "review", f"priority gene {gene} with {impact} impact"
+
+    #Rule 5: Non-priority gene + high/moderate impact
+    elif not is_priority and is_high_mod:
+        return "review", f"non-priority gene {gene} with {impact} impact"
+
+    #Rule 6: Non-priority gene + low/modifier impact
+    else:
+        return "exclude", f"non-priority gene {gene} with {impact} impact"
 
 
 def triage(rows: list[dict], params: dict) -> list[dict]:
@@ -51,7 +86,21 @@ def triage(rows: list[dict], params: dict) -> list[dict]:
 
     The input rows and params are never modified.
     """
-    raise NotImplementedError("TODO: implement triage")
+    result = []
+
+    for row in rows:
+        #get decision and reason
+        decision, reason = classify_variant(row, params)
+
+        #copy of the row
+        new_row = row.copy()
+
+        new_row["decision"] = decision
+        new_row["reason"] = reason
+
+        result.append(new_row)
+
+    return result
 
 
 def decision_counts(results: list[dict]) -> dict[str, int]:
