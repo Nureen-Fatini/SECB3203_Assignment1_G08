@@ -191,22 +191,36 @@ def rank_variants(results: list[dict], k: int) -> list[dict]:
         return(
             decision_rank[decision],
             impact_rank[impact],
-            -int(row["quality"]), # -ve so big one come first
-            -int(row["depth"]),    # -ve so big one come first
-            int(row["pos"]),      # +ve so smaller pos comes first 
+            -int(row["quality"]), #-ve so big one come first
+            -int(row["depth"]),    #-ve so big one come first
+            int(row["pos"]),      #+ve so smaller pos comes first
         )
-
     #sort & return the top k
     ranked = sorted(eligible, key=sort_key)
-    return ranked[:k]        
-
+    return ranked[:k]
 
 def results_to_csv(results: list[dict]) -> str:
     """CSV text: a header line (CSV_COLUMNS) and one line per result in the given order.
 
     Every line ends with a newline. Reason text contains no commas, so no quoting is needed.
     """
-    raise NotImplementedError("TODO: implement results_to_csv")
+    # combine CSV_COLUMNS into a header string
+    header = ",".join(CSV_COLUMNS)
+
+    # Strt the csv text with header and newline
+    csv_text = header + "\n"
+
+    #loop to every variant dict in the results
+    for row in results:
+        values = []
+        for col in CSV_COLUMNS:
+            values.append(str(row[col]))
+
+        line = ",".join(values)
+        csv_text = csv_text + line + "\n"
+
+    #return teh finished csv string
+    return csv_text
 
 
 def build_report(results: list[dict], params: dict) -> str:
