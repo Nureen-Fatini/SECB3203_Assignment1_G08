@@ -170,7 +170,35 @@ def rank_variants(results: list[dict], k: int) -> list[dict]:
     Raises:
         ValueError: if k is negative.
     """
-    raise NotImplementedError("TODO: implement rank_variants")
+    if k < 0 :
+        raise ValueError("k must be a non negative number.")
+
+    #this is to keep only the variant that is not excluded
+    eligible = []
+    for row in results:
+                 decision = row["decision"].strip().casefold()
+                 if decision != "exclude":
+                     eligible.append(row)
+
+    #to map the text label to the rank no. - small no = high priority
+    decision_rank = {"prioritize":0, "review":1}
+    impact_rank = {"high":0, "moderate":1, "low":2, "modifier":3}
+
+    #the helper func will tell python how to compare 2 rows
+    def sort_key(row:dict) -> tuple[int, int, int, int, int]:
+        decision = row["decision"].strip().casefold()
+        impact = row["impact"].strip().casefold()
+        return(
+            decision_rank[decision],
+            impact_rank[impact],
+            -int(row["quality"]), # -ve so big one come first
+            -int(row["depth"]),    # -ve so big one come first
+            int(row["pos"]),      # +ve so smaller pos comes first 
+        )
+
+    #sort & return the top k
+    ranked = sorted(eligible, key=sort_key)
+    return ranked[:k]        
 
 
 def results_to_csv(results: list[dict]) -> str:
