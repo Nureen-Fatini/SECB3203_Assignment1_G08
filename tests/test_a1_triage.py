@@ -14,6 +14,7 @@ from src.a1_triage import (
     results_to_csv,
     build_report,
 )
+from copy import deepcopy
 
 #Parameters
 PARAMS_PATH = Path(__file__).resolve().parents[1] / "data" / "params.json"
@@ -228,12 +229,26 @@ def test_gene_summary_empty():
     assert gene_summary([]) == {}
 
 
-# Test 5 and 6: rank_variants(), results_to_csv()
+# Test 5 and 6: rank_variants(), results_to_csv() - DASNEEM
 
 def test_rank_variants_order_and_excludes():
     # TODO: prioritize before review, then impact, then higher quality, higher depth, smaller pos
-    pass
+    results = [
+        {"variant": "s1", "gene": "BRCA2", "chrom": "13", "pos": "100", "depth": "30", "quality": "90", "impact": "high", "decision": "prioritize", "reason": "r1"},
+        {"variant": "s2", "gene": "MYC", "chrom": "8", "pos": "200", "depth": "20", "quality": "95", "impact": "high", "decision": "prioritize", "reason": "r2"},
+        {"variant": "s3", "gene": "CFTR", "chrom": "7", "pos": "150", "depth": "25", "quality": "90", "impact": "moderate", "decision": "prioritize", "reason": "r3"},
+        {"variant": "s4", "gene": "TP53", "chrom": "17", "pos": "50", "depth": "40", "quality": "99", "impact": "high", "decision": "review", "reason": "r4"},
+        {"variant": "s5", "gene": "RB1", "chrom": "13", "pos": "300", "depth": "18", "quality": "80", "impact": "low", "decision": "review", "reason": "r5"},
+        {"variant": "s6", "gene": "BRCA2", "chrom": "13", "pos": "80", "depth": "10", "quality": "95", "impact": "high", "decision": "exclude", "reason": "r6"},
+    ]
+    ranked = rank_variants(results,5)
 
+    names = []
+    for row in ranked:
+        names.append(row["variant"])
+
+    assert names == ["s2", "s1", "s3", "s4", "s5"]
+    assert "s6" not in names
 
 def test_rank_variants_ties():
     # TODO: two variants equal on decision/impact/quality/depth: smaller pos comes first
