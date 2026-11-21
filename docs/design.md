@@ -37,7 +37,10 @@ FUNCTION classify_variant(row, params):
     ELSE RETURN ("exclude", "non-priority gene {gene} with {impact} impact")
 END FUNCTION
 ```
-## 3. Hand trace
+
+### 3. Hand trace
+
+Using G08 parameters (`min_depth = 12`, `min_quality = 75`, `priority_genes = ["BRCA2", "RB1", "CFTR", "MYC", "KRAS"]`) on `data/variants.csv` (`v1`–`v6`, plus `v7` and `v13` to reach Rules 5 and 4)[cite: 1]:
 
 | Variant | Gene | Depth | Quality | Impact | Rule that fires | Decision | Reason |
 |---|---|---|---|---|---|---|---|
