@@ -16,6 +16,7 @@ CSV_COLUMNS = [
     "variant", "gene", "chrom", "pos", "depth", "quality", "impact", "decision", "reason",
 ]
 CLI_ARGUMENTS = 3
+MEAN_DEPTH_DECIMALS = 1
 
 
 def load_variants(path) -> list[dict]:
@@ -105,15 +106,26 @@ def triage(rows: list[dict], params: dict) -> list[dict]:
 
 def decision_counts(results: list[dict]) -> dict[str, int]:
     """Number of results per decision; keys are always prioritize, review, exclude (in order)."""
-    raise NotImplementedError("TODO: implement decision_counts")
-
+    counts = {decision: 0 for decision in DECISIONS}
+    for row in results:
+        decision = row["decision"].strip().casefold()
+        if decision in counts:
+            counts[decision] += 1
+    return counts
 
 def impact_counts(results: list[dict]) -> dict[str, int]:
     """Impact counts over variants that were NOT excluded.
 
     Keys are always high, moderate, low, modifier (in that order), zeros included.
     """
-    raise NotImplementedError("TODO: implement impact_counts")
+    counts = {impact: 0 for impact in IMPACT_ORDER}
+    for row in results:
+        if row["decision"].strip().casefold() == "exclude":
+            continue
+        impact = row["impact"].strip().casefold()
+        if impact in counts:
+            counts[impact] += 1
+    return counts
 
 
 def gene_summary(results: list[dict]) -> dict[str, dict]:
@@ -122,8 +134,29 @@ def gene_summary(results: list[dict]) -> dict[str, dict]:
     Each value is {"total": n, "prioritize": a, "review": b, "exclude": c, "mean_depth": d}
     where mean_depth is the mean depth of ALL the gene's variants, rounded to 1 decimal.
     """
-    raise NotImplementedError("TODO: implement gene_summary")
+    if not results:
+        return {}
 
+    grouped: dict[str, list[dict]] = {}
+    for row in results:
+        gene = row["gene"].strip()
+        grouped.setdefault(gene, []).append(row)
+
+    summary: dict[str, dict] = {}
+    for gene in sorted(grouped):
+        gene_rows = grouped[gene]
+        per_decision = decision_counts(gene_rows)
+        total_depth = sum(int(row["depth"]) for row in gene_rows)
+        mean_depth = round(total_depth / len(gene_rows), MEAN_DEPTH_DECIMALS)
+        summary[gene] = {
+            "total": len(gene_rows),
+            "prioritize": per_decision["prioritize"],
+            "review": per_decision["review"],
+            "exclude": per_decision["exclude"],
+            "mean_depth": mean_depth,
+        }
+
+    return summary
 
 def rank_variants(results: list[dict], k: int) -> list[dict]:
     """Top k variants that were not excluded, best first.
