@@ -56,14 +56,29 @@ Using G08 parameters (`min_depth = 12`, `min_quality = 75`, `priority_genes = ["
 
 ## 4. Test plan
 
-*   **Normal:** A standard variant with a priority gene and high impact returns `prioritize`. The other gene and impact combinations return the decision of their rule: priority gene + low impact returns `review` (Rule 4), non-priority gene + high impact returns `review` (Rule 5), and non-priority gene + modifier impact returns `exclude` (Rule 6).
-*   **Boundary (Exactly at threshold):** Depth = 12 and Quality = 75. Must NOT be excluded (boundaries are inclusive).
-*   **Boundary (One below threshold):** Depth = 11 returns `exclude` (Rule 1); Quality = 74 returns `exclude` (Rule 2). The reason contains the word, the observed value and the threshold (for example `quality 74 below 75`).
-*   **Boundary (One above threshold):** Depth = 13 and Quality = 76. Must pass the QC rules and evaluate the impact/gene rules.
-*   **Rule Order:** A variant with Depth=5 and Quality=5 must fire Rule 1 (Depth) and NOT Rule 2 (Quality) in the reason string.
-*   **Awkward input (Messy text):** Gene `" brca2 "` and impact `" HIGH "` must be stripped and lowercased to match correctly.
-*   **Awkward input (Empty list):** Calling `triage([])` must return an empty list `[]` without crashing.
-*   **Invalid input:** Calling `classify_variant()` with `depth = "abc"` must raise `ValueError`. Calling `rank_variants()` with a negative `k` must raise `ValueError`.
+**Group G08 Parameters (`data/params.json`):** `min_depth = 12`, `min_quality = 75`, `priority_genes = ["BRCA2", "RB1", "CFTR", "MYC", "KRAS"]`, `top_k = 5`.
+
+| ID | Category | Function(s) | Input | Expected Output |
+| :--- | :--- | :--- | :--- | :--- |
+| **TC-01** | Normal | `classify_variant` | `BRCA2`, depth `30`, qual `90`, `high` | `("prioritize", "priority gene brca2 with high impact")` (Rule 3) |
+| **TC-02** | Normal | `classify_variant` | `BRCA2`, depth `30`, qual `90`, `low` | `("review", "priority gene brca2 with low impact")` (Rule 4) |
+| **TC-03** | Normal | `classify_variant` | `TP53`, depth `30`, qual `90`, `moderate` | `("review", "non-priority gene tp53 with moderate impact")` (Rule 5) |
+| **TC-04** | Normal | `classify_variant` | `TP53`, depth `30`, qual `90`, `modifier` | `("exclude", "non-priority gene tp53 with modifier impact")` (Rule 6) |
+| **TC-05** | Normal | `triage`, summaries, `rank_variants`, `results_to_csv` | **Shared Dataset (`s1`–`s6`)** below (`k=5`) | Input unchanged; `decision_counts`: `prioritize=3`, `review=2`, `exclude=1`; `impact_counts`: `high=3`, `moderate=1`, `low=1`, `modifier=0`; alphabetical `gene_summary`; top 5 `["s2", "s1", "s3", "s4", "s5"]`; CSV has the correct header, column order, input row order, and trailing newline |
+| **TC-06** | Boundary | `classify_variant` | Tested separately (`BRCA2`, `high`): `depth="11"` vs `"12"` (qual `90`); `quality="74"` vs `"75"` (depth `30`) | Depth `11` -> `"exclude"`, `12` -> `"prioritize"`; Quality `74` -> `"exclude"`, `75` -> `"prioritize"` |
+| **TC-07** | Awkward | `classify_variant` | `gene="  bRcA2 "`, `impact=" HIGH "`, depth `30`, qual `90` | `("prioritize", "priority gene brca2 with high impact")` |
+| **TC-08** | Edge (Empty/Small) | `triage`, `decision_counts`, `impact_counts`, `gene_summary`, `rank_variants`, `results_to_csv` | Empty list `[]`; or 2 triaged results (`[s1, s4]`) with `k=5` | `triage([])` / `rank_variants([], 5)` -> `[]`; `decision_counts([])` / `impact_counts([])` -> all zeros; `gene_summary([])` -> `{}`; `results_to_csv([])` -> header only, ending with `\n`; `k=5` with `[s1, s4]` returns all 2 rows safely |
+| **TC-09** | Invalid | `classify_variant`, `rank_variants` | Tested separately: `depth="abc"`, `quality="abc"`, `k=-1` | Raises `ValueError` for each separate invalid input |
+
+### Shared Test Dataset (`s1`–`s6`) for TC-05 & TC-08
+| Variant | Gene | Chrom | Pos | Depth | Quality | Impact | Expected Decision |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `s1` | BRCA2 | 13 | 100 | 30 | 90 | high | `prioritize` |
+| `s2` | MYC | 8 | 200 | 20 | 95 | high | `prioritize` |
+| `s3` | CFTR | 7 | 150 | 25 | 90 | moderate | `prioritize` |
+| `s4` | TP53 | 17 | 50 | 40 | 99 | high | `review` |
+| `s5` | RB1 | 13 | 300 | 18 | 80 | low | `review` |
+| `s6` | BRCA2 | 13 | 80 | 10 | 95 | high | `exclude` (depth 10 < 12) |
 
 ## 5. Work plan
 
