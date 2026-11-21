@@ -39,19 +39,20 @@ END FUNCTION
 
 ## 3. Hand trace
 
-*Trace the first six rows of YOUR data/variants.csv (v1 to v6) with YOUR thresholds, then two more rows of
-your choice that reach rules 3 to 6. Do it by hand BEFORE you run your code, then compare with your code.*
+### 3. Hand trace
+
+Using G08 parameters (`min_depth = 12`, `min_quality = 75`, `priority_genes = ["BRCA2", "RB1", "CFTR", "MYC", "KRAS"]`) on `data/variants.csv` (`v1`–`v6`, plus `v7` and `v13` to reach Rules 5 and 4)[cite: 1]:
 
 | Variant | Gene | Depth | Quality | Impact | Rule that fires | Decision | Reason |
-|---|---|---|---|---|---|---|---|
-| v1 | RB1 | 9 | 90 | high | 1 (Depth) | exclude  | depth 9 below 12 |
-| v2 | TP5S | 10 | 90 | modifier | 1 (Depth) | exclude  | depth 10 below 12 |
-| v3 | MLH1 |11 | 90 | high | 1 (Depth) | exclude  | depth 11 below 12 |
-| v4 | CFTR | 30 | 79 | high | 3 (Priority + High/Mod) | prioritize | priority gene CFTR with high impact |
-| v5 | MYC | 30 | 80 | 3 (Priority + High/Mod) | 1 (Depth) | prioritize   | priority gene myc with moderate impact |
-| v6 | MLH1 | 30 | 81 | modifier  | 6 (Non-priority + Low/Mod) | exclude | non-priority gene mlh1 with modifier impact |
-| v7 | PTEN | 36 | 98 | high | 5 (Non-priority + High/Mod) | review | non-priority gene pten with high impact |
-| v8 | KRAS | 24 | 83 | moderate | 3 (Priority + High/Mod) | prioritize | priority gene kras with moderate impact |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| v1 | RB1 | 9 | 90 | high | Rule 1 (`depth < min_depth`: 9 < 12)[cite: 1] | exclude[cite: 1] | Rule 1 depth 9 below min_depth 12[cite: 1] |
+| v2 | TP53 | 10 | 90 | modifier | Rule 1 (`depth < min_depth`: 10 < 12)[cite: 1] | exclude[cite: 1] | Rule 1 depth 10 below min_depth 12[cite: 1] |
+| v3 | MLH1 | 11 | 90 | high | Rule 1 (`depth < min_depth`: 11 < 12)[cite: 1] | exclude[cite: 1] | Rule 1 depth 11 below min_depth 12[cite: 1] |
+| v4 | CFTR | 30 | 79 | high | Rule 3 (priority gene + high impact)[cite: 1] | prioritize[cite: 1] | Rule 3 priority gene cftr with high impact[cite: 1] |
+| v5 | MYC | 30 | 80 | moderate | Rule 3 (priority gene + moderate impact)[cite: 1] | prioritize[cite: 1] | Rule 3 priority gene myc with moderate impact[cite: 1] |
+| v6 | MLH1 | 30 | 81 | modifier | Rule 6 (non-priority gene + modifier impact)[cite: 1] | exclude[cite: 1] | Rule 6 non-priority gene mlh1 with modifier impact[cite: 1] |
+| v7 | PTEN | 36 | 98 | high | Rule 5 (non-priority gene + high impact)[cite: 1] | review[cite: 1] | Rule 5 non-priority gene pten with high impact[cite: 1] |
+| v13 | CFTR | 28 | 80 | modifier | Rule 4 (priority gene + modifier impact)[cite: 1] | review[cite: 1] | Rule 4 priority gene cftr with modifier impact[cite: 1] |
 
 
 ## 4. Test plan
