@@ -36,8 +36,7 @@ FUNCTION classify_variant(row, params):
     ELSE IF NOT is_priority AND is_high_mod THEN RETURN ("review", "non-priority gene {gene} with {impact} impact")
     ELSE RETURN ("exclude", "non-priority gene {gene} with {impact} impact")
 END FUNCTION
-
-## 3. Hand trace
+```
 
 ### 3. Hand trace
 
