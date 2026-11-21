@@ -118,30 +118,110 @@ def test_classify_variant_invalid_depth_raises():
 
 # Test 3 and 4: decision_counts(), impact_counts(), gene_summary()
 
+DEPTH_LOW = 10
+DEPTH_MID = 20
+DEPTH_HIGH = 30
+EXPECTED_DECISION_KEYS = ["prioritize", "review", "exclude"]
+EXPECTED_IMPACT_KEYS = ["high", "moderate", "low", "modifier"]
+EXPECTED_MEAN_DEPTH_BRCA2 = 25.0
+EXPECTED_MEAN_DEPTH_TP53 = 10.0
+
+
 def make_results():
     """A small hand-made results list (rows plus decision and reason)."""
-    # TODO: build 4 or 5 result dicts by hand with different genes, impacts, decisions
-    return []
+    return [
+        {
+            **make_row(variant="r1", gene="BRCA2", impact="high", depth=DEPTH_HIGH),
+            "decision": "prioritize",
+            "reason": "priority gene brca2 with high impact",
+        },
+        {
+            **make_row(variant="r2", gene="BRCA2", impact="low", depth=DEPTH_MID),
+            "decision": "review",
+            "reason": "priority gene brca2 with low impact",
+        },
+        {
+            **make_row(variant="r3", gene="TP53", impact="modifier", depth=DEPTH_LOW),
+            "decision": "exclude",
+            "reason": "depth 10 below 12",
+        },
+        {
+            **make_row(variant="r4", gene="EGFR", impact="moderate", depth=DEPTH_MID),
+            "decision": "review",
+            "reason": "non-priority gene egfr with moderate impact",
+        },
+    ]
 
 
 def test_decision_counts_normal():
-    # TODO: assert exact dict AND key order: list(result.keys()) == ["prioritize", "review", "exclude"]
-    pass
+    result = decision_counts(make_results())
+    assert list(result.keys()) == EXPECTED_DECISION_KEYS
+    assert result == {"prioritize": 1, "review": 2, "exclude": 1}
 
 
 def test_decision_counts_empty_has_zeros():
-    # TODO: assert decision_counts([]) == {"prioritize": 0, "review": 0, "exclude": 0}
-    pass
+    result = decision_counts([])
+    assert list(result.keys()) == EXPECTED_DECISION_KEYS
+    assert result == {"prioritize": 0, "review": 0, "exclude": 0}
 
 
 def test_impact_counts_ignores_excluded():
-    # TODO: excluded variants must NOT be counted; keys high, moderate, low, modifier with zeros
-    pass
+    rows = [
+        {
+            **make_row(variant="r1", gene="BRCA2", impact="high"),
+            "decision": "prioritize",
+            "reason": "priority gene brca2 with high impact",
+        },
+        {
+            **make_row(variant="r2", gene="TP53", impact="modifier", depth=DEPTH_LOW),
+            "decision": "exclude",
+            "reason": "depth 10 below 12",
+        },
+        {
+            **make_row(variant="r3", gene="EGFR", impact=" MODERATE "),
+            "decision": "review",
+            "reason": "non-priority gene egfr with moderate impact",
+        },
+    ]
+    result = impact_counts(rows)
+    assert list(result.keys()) == EXPECTED_IMPACT_KEYS
+    assert result == {"high": 1, "moderate": 1, "low": 0, "modifier": 0}
 
 
 def test_gene_summary_alphabetical_and_mean_depth():
-    # TODO: genes in alphabetical order, total/prioritize/review/exclude, mean_depth rounded to 1 decimal
-    pass
+    rows = [
+        {
+            **make_row(variant="r1", gene="TP53", impact="modifier", depth=DEPTH_LOW),
+            "decision": "exclude",
+            "reason": "depth 10 below 12",
+        },
+        {
+            **make_row(variant="r2", gene="BRCA2", impact="high", depth=DEPTH_HIGH),
+            "decision": "prioritize",
+            "reason": "priority gene brca2 with high impact",
+        },
+        {
+            **make_row(variant="r3", gene="BRCA2", impact="low", depth=DEPTH_MID),
+            "decision": "review",
+            "reason": "priority gene brca2 with low impact",
+        },
+    ]
+    summary = gene_summary(rows)
+    assert list(summary.keys()) == ["BRCA2", "TP53"]
+    assert summary["BRCA2"] == {
+        "total": 2,
+        "prioritize": 1,
+        "review": 1,
+        "exclude": 0,
+        "mean_depth": EXPECTED_MEAN_DEPTH_BRCA2,
+    }
+    assert summary["TP53"] == {
+        "total": 1,
+        "prioritize": 0,
+        "review": 0,
+        "exclude": 1,
+        "mean_depth": EXPECTED_MEAN_DEPTH_TP53,
+    }
 
 
 def test_gene_summary_empty():
@@ -209,4 +289,15 @@ def test_integration_triage_into_summaries():
     results = triage(rows, TEST_PARAMS)
     counts = decision_counts(results)
     assert sum(counts.values()) == len(rows)
+
+    impacts = impact_counts(results)
+    assert sum(impacts.values()) == counts["prioritize"] + counts["review"]
+    assert impacts["high"] == 1
+    assert impacts["moderate"] == 0
+    assert impacts["low"] == 0
+    assert impacts["modifier"] == 0
+
+    summary = gene_summary(results)
+    assert sum(gene_info["total"] for gene_info in summary.values()) == len(rows)
+    assert list(summary.keys()) == sorted(summary.keys())
     # TODO: also call gene_summary, rank_variants and results_to_csv on `results`
