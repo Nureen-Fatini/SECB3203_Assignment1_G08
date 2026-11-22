@@ -5,12 +5,14 @@
 
 ## Group
 
-- Group ID: <G08>
-- Members: <full name (matric)>, <full name (matric)>, <full name (matric)>
+- Student name: Nureen Fatini Binti Zulkefli, Yaaswiny Abbiramavally Thinaharan, Dasneem Banu Binti Haja, Sarveswari A/P Vasuthevan
+- Matric no: A24CS0169, A24CS0213, A24CS0066, A24CS0185
+- Group ID: G08
+- Members: Nureen Fatini Binti Zulkefli (A24CS0169), Yaaswiny Abbiramavally Thinaharan (A24CS0213), Dasneem Banu Binti Haja (A24CS0066), Sarveswari A/P Vasuthevan (A24CS0185)
 
 ## What this project does
 
-<Three or four sentences: what a variant triage service is, what goes in, what comes out.>
+<A variant triage service applies ordered, threshold-based rules to filter and prioritize genetic variant calls consistently instead of relying on ad-hoc spreadsheets. It takes a CSV file of variant records (such as gene, chromosome, position, depth, quality, and impact) and a JSON parameter configuration as inputs. From those inputs, it produces triage decisions (`prioritize`, `review`, `exclude`) with recorded reasons, summary counts, ranked top-k variants, a CSV export, and a formatted report.>
 
 ## Set up
 
@@ -22,8 +24,8 @@ pip install -r requirements.txt
 
 ## Run
 
-<Write the exact command. The course command is: python src/a1_triage.py data/variants.csv data/params.json results>
-<Say which files appear in results/.>
+<Run the pipeline using `python src/a1_triage.py data/variants.csv data/params.json results`.>
+<Running the command generates `results/triage.csv` and `results/report.txt` inside the `results/` folder.>
 
 ## Test and lint
 
@@ -34,16 +36,16 @@ ruff check src
 
 ## Our parameters
 
-Our thresholds, priority genes and top_k are in data/params.json (<write the values here>).
+Our thresholds, priority genes and top_k are in data/params.json (`min_depth=12`, `min_quality=75`, `priority_genes=["BRCA2", "RB1", "CFTR", "MYC", "KRAS"]`, `top_k=5`).
 They are read at run time and passed to the functions; they are not typed into the rules.
 
 ## Design
 
-<Link to docs/design.md and say in two sentences what it contains.>
+[docs/design.md](docs/design.md) contains the problem decomposition table, six-rule variant classification pseudocode/flowchart, and hand-trace tables for sample rows. It also outlines the group test plan, work plan, and design review notes.
 
 ## Limitations
 
-<At least two honest limitations, for example: rules use depth, quality and impact only; the data are synthetic.>
+This triage logic relies only on read depth, base/variant quality, priority gene membership, and impact labels under simplified teaching rules rather than clinical variant-interpretation guidelines. In addition, `data/variants.csv` uses synthetic teaching data and is not intended for clinical use or real patient records.
 
 ## Who did what
 
