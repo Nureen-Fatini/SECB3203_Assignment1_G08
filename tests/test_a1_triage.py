@@ -313,9 +313,22 @@ def test_rank_variants_does_not_modify_input():
 def test_results_to_csv_format():
     # TODO: first line == "variant,gene,chrom,pos,depth,quality,impact,decision,reason"
     #       every line ends with "\n"; one line per result in the same order
-    pass
+    results = [
+                {"variant": "s1", "gene": "BRCA2", "chrom": "13", "pos": "100", "depth": "30", "quality": "90", "impact": "high", "decision": "prioritize", "reason": "r1"},
+                {"variant": "s2", "gene": "MYC", "chrom": "8", "pos": "200", "depth": "20", "quality": "95", "impact": "high", "decision": "prioritize", "reason": "r2"},
+        ]
 
+    csv_text = results_to_csv(results)
+    lines = csv_text.splitlines()
 
+    assert csv_text.endswith("\n")
+    assert len(lines) == 3
+    assert lines[0] == "variant,gene,chrom,pos,depth,quality,impact,decision,reason"
+    assert lines[1] == "s1,BRCA2,13,100,30,90,high,prioritize,r1"
+    assert lines[2] == "s2,MYC,8,200,20,95,high,prioritize,r2"
+
+    #empty list returns only the header line and the trailing newline
+    assert results_to_csv([]) == "variant,gene,chrom,pos,depth,quality,impact,decision,reason\n"
 
 # Test 7 and 7: build_report()
 
