@@ -54,7 +54,7 @@ This triage logic relies only on read depth, base/variant quality, priority gene
 | Nureen Fatini Binti Zulkefli | T1 Part 1; T2 – Implemented `classify_variant()` and `triage()`; T6 – Tests for classification and triage | [Count] |
 | Yaaswiny Abbiramavally Thinaharan | T1 Part 3; T3 – Implemented the summary functions; T6 – Tests for summary functions | [Count] |
 | Dasneem Banu Binti Haja | T1 Part 4 – Prepared the test plan; T4 – Implemented `rank_variants()`; T5 – Implemented `results_to_csv()`; T6 – Tests for variant ranking and CSV export | 8 |
-| Sarveswari A/P Vasuthevan | T1 Part 2; T5 – Implemented `build_report()`; T6 – Tests for report generation | [Count] |
+| Sarveswari A/P Vasuthevan | T1 Part 2; T5 – Implemented `build_report()`; T6 – Tests for report generation | [4] |
 
 ## AI use
 
