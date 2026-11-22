@@ -302,8 +302,13 @@ def test_rank_variants_negative_k_raises():
 
 def test_rank_variants_does_not_modify_input():
     # TODO: deepcopy before, compare after
-    pass
-
+    results = [
+            {"variant": "s1", "gene": "BRCA2", "chrom": "13", "pos": "100", "depth": "30", "quality": "90", "impact": "high", "decision": "prioritize", "reason": "r1"},
+            {"variant": "s2", "gene": "MYC", "chrom": "8", "pos": "200", "depth": "20", "quality": "95", "impact": "high", "decision": "prioritize", "reason": "r2"},
+        ]
+    original = deepcopy(results)
+    rank_variants(results,5)
+    assert results == original
 
 def test_results_to_csv_format():
     # TODO: first line == "variant,gene,chrom,pos,depth,quality,impact,decision,reason"
