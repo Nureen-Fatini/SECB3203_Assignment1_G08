@@ -279,11 +279,21 @@ def test_rank_variants_ties():
     assert ranked[0]["variant"] == "B"
     assert ranked[1]["variant"] == "A"
 
-
 def test_rank_variants_k_zero_and_k_too_large():
     # TODO: k=0 gives []; k bigger than candidates gives all candidates
-    pass
+    results = [
+        {"variant": "s1", "gene": "BRCA2", "chrom": "13", "pos": "100", "depth": "30", "quality": "90", "impact": "high", "decision": "prioritize", "reason": "r1"},
+        {"variant": "s2", "gene": "MYC", "chrom": "8", "pos": "200", "depth": "20", "quality": "95", "impact": "high", "decision": "prioritize", "reason": "r2"},
+    ]
 
+    #k=0 will return the empty list
+    assert rank_variants(results, 0) == []
+
+    #k=5 when only 2 qualify returns both in ranked order
+    ranked_all = rank_variants(results,5)
+    assert len(ranked_all) == 2
+    assert ranked_all[0]["variant"] == "s2"
+    assert ranked_all[1]["variant"] == "s1"
 
 def test_rank_variants_negative_k_raises():
     with pytest.raises(ValueError):
