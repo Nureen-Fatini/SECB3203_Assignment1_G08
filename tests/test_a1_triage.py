@@ -252,7 +252,32 @@ def test_rank_variants_order_and_excludes():
 
 def test_rank_variants_ties():
     # TODO: two variants equal on decision/impact/quality/depth: smaller pos comes first
-    pass
+    results = [
+        {"variant": "A", 
+                "gene": "BRCA2", 
+                "chrom": "13", 
+                "pos": "200", 
+                "depth": "30", 
+                "quality": "90", 
+                "impact":"high", 
+                "decision": "prioritize", 
+                "reason":"rA"},
+
+         {"variant": "B", 
+                  "gene": "BRCA2", 
+                  "chrom": "13", 
+                  "pos": "100", 
+                  "depth": "30", 
+                  "quality": "90", 
+                  "impact":"high", 
+                  "decision": "prioritize", 
+                  "reason":"rB"},
+    ]
+
+    ranked = rank_variants(results,2)
+
+    assert ranked[0]["variant"] == "B"
+    assert ranked[1]["variant"] == "A"
 
 
 def test_rank_variants_k_zero_and_k_too_large():
