@@ -230,8 +230,34 @@ def build_report(results: list[dict], params: dict) -> str:
     'Variants: N', one 'decision: count' line per decision, a blank line,
     'Top K variants' and then 'rank. variant | gene | impact | decision' lines.
     """
-    raise NotImplementedError("TODO: implement build_report")
+    min_depth = params["min_depth"]
+    min_quality = params["min_quality"]
+    priority_genes = params["priority_genes"]
+    top_k = params["top_k"]
 
+    counts = decision_counts(results)
+    ranked = rank_variants(results, top_k)
+
+    lines = [
+        "Variant triage report (synthetic teaching data)",
+        f"Thresholds: min_depth={min_depth} min_quality={min_quality}",
+        f"Priority genes: {', '.join(priority_genes)}",
+        f"Variants: {len(results)}",
+    ]
+
+    for decision in DECISIONS:
+        lines.append(f"{decision}: {counts[decision]}")
+
+    lines.append("")
+    lines.append(f"Top {top_k} variants")
+
+    for rank, item in enumerate(ranked, start=1):
+        lines.append(
+            f"{rank}. {item['variant']} | {item['gene']} | "
+            f"{item['impact']} | {item['decision']}"
+        )
+
+    return "\n".join(lines)
 
 def main(argv: list[str] | None = None) -> int:
     """Command line: python src/a1_triage.py VARIANTS_CSV PARAMS_JSON OUT_DIR."""

@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
-from src.a1_triage import (
+from a1_triage import (
     classify_variant,
     triage,
     decision_counts,
@@ -330,22 +330,78 @@ def test_results_to_csv_format():
     #empty list returns only the header line and the trailing newline
     assert results_to_csv([]) == "variant,gene,chrom,pos,depth,quality,impact,decision,reason\n"
 
-# Test 7 and 7: build_report()
+# Test 7 and 8: build_report()   (Sarves)
+
+REPORT_PARAMS = {
+    "min_depth": 12,
+    "min_quality": 75,
+    "priority_genes": ["BRCA2", "RB1"],
+    "top_k": 3,
+}
+
 
 def test_build_report_lines():
-    # TODO: check "Thresholds: min_depth=... min_quality=..." line, "Priority genes: A, B, ...",
-    #       "Variants: N", "prioritize: n", "review: n", "exclude: n"
-    pass
+    """Normal: header lines, counts and the top-k listing in the fixed format."""
+    report = build_report(make_results(), REPORT_PARAMS)
+    assert report.splitlines() == [
+        "Variant triage report (synthetic teaching data)",
+        "Thresholds: min_depth=12 min_quality=75",
+        "Priority genes: BRCA2, RB1",
+        "Variants: 4",
+        "prioritize: 1",
+        "review: 2",
+        "exclude: 1",
+        "",
+        "Top 3 variants",
+        "1. r1 | BRCA2 | high | prioritize",
+        "2. r4 | EGFR | moderate | review",
+        "3. r2 | BRCA2 | low | review",
+    ]
 
 
 def test_build_report_top_k_listing():
-    # TODO: lines start with "1. v12 | GENE1 | high | prioritize" (check the separator in the brief)
-    pass
+    """top_k limits the listing; excluded variants never appear."""
+    params = dict(REPORT_PARAMS, top_k=2)
+    lines = build_report(make_results(), params).splitlines()
+    assert "Top 2 variants" in lines
+    listing = lines[lines.index("Top 2 variants") + 1:]
+    assert listing == [
+        "1. r1 | BRCA2 | high | prioritize",
+        "2. r4 | EGFR | moderate | review",
+    ]
+    assert not any("r3" in line for line in listing)
+
+
+def test_build_report_top_k_zero():
+    """Boundary: top_k = 0 prints the heading and no ranked lines."""
+    params = dict(REPORT_PARAMS, top_k=0)
+    lines = build_report(make_results(), params).splitlines()
+    assert lines[-1] == "Top 0 variants"
+    assert not any(line.startswith("1.") for line in lines)
 
 
 def test_build_report_fewer_than_k_and_empty():
-    # TODO: fewer than K qualifying variants lists only those; empty results do not crash
-    pass
+    """Edge: fewer qualifying variants than top_k, and an empty results list."""
+    params = dict(REPORT_PARAMS, top_k=5)
+
+    lines = build_report(make_results(), params).splitlines()
+    listing = lines[lines.index("Top 5 variants") + 1:]
+    assert len(listing) == 3          # r3 is excluded, so only 3 qualify
+
+    empty_lines = build_report([], params).splitlines()
+    assert "Variants: 0" in empty_lines
+    assert "prioritize: 0" in empty_lines
+    assert "review: 0" in empty_lines
+    assert "exclude: 0" in empty_lines
+    assert empty_lines[-1] == "Top 5 variants"
+
+
+def test_build_report_does_not_modify_input():
+    results = make_results()
+    params = copy.deepcopy(REPORT_PARAMS)
+    results_before = copy.deepcopy(results)
+    build_report(results, params)
+    assert results == results_before and params == REPORT_PARAMS
 
 
 # ==================================================================
@@ -368,4 +424,21 @@ def test_integration_triage_into_summaries():
     summary = gene_summary(results)
     assert sum(gene_info["total"] for gene_info in summary.values()) == len(rows)
     assert list(summary.keys()) == sorted(summary.keys())
-    # TODO: also call gene_summary, rank_variants and results_to_csv on `results`
+
+    ranked = rank_variants(results, TEST_PARAMS["top_k"])
+    assert [r["variant"] for r in ranked] == ["a"]   # b and c are excluded
+
+    csv_lines = results_to_csv(results).splitlines()
+    assert csv_lines[0] == "variant,gene,chrom,pos,depth,quality,impact,decision,reason"
+    assert len(csv_lines) == len(rows) + 1
+    assert [line.split(",")[0] for line in csv_lines[1:]] == ["a", "b", "c"] 
+def test_integration_triage_into_report():
+    rows = [make_row(variant="a"), make_row(variant="b", depth=1)]
+    results = triage(rows, TEST_PARAMS)
+    lines = build_report(results, TEST_PARAMS).splitlines()
+    assert "Variants: 2" in lines
+    assert "prioritize: 1" in lines
+    assert "exclude: 1" in lines
+    top_k = TEST_PARAMS["top_k"]
+    assert f"Top {top_k} variants" in lines
+    assert f"1. a | {PRIORITY_GENE} | high | prioritize" in lines

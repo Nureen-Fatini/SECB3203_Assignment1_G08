@@ -19,24 +19,44 @@ Group ID: <G08>      Thresholds from data/params.json: min_depth = <12>, min_qua
 
 ```text
 FUNCTION classify_variant(row, params):
-    depth = int(row["depth"])
-    quality = int(row["quality"])
-    gene = casefold(strip(row["gene"]))
-    impact = casefold(strip(row["impact"]))
-    priority_genes = set(casefold(strip(g)) for g in params["priority_genes"])
-    
-    IF depth < params["min_depth"] THEN RETURN ("exclude", "depth {depth} below min_depth {params['min_depth']}")
-    IF quality < params["min_quality"] THEN RETURN ("exclude", "quality {quality} below min_quality {params['min_quality']}")
-    
-    is_priority = gene IN priority_genes
-    is_high_mod = impact IN ["high", "moderate"]
-    
-    IF is_priority AND is_high_mod THEN RETURN ("prioritize", "priority gene {gene} with {impact} impact")
-    ELSE IF is_priority AND NOT is_high_mod THEN RETURN ("review", "priority gene {gene} with {impact} impact")
-    ELSE IF NOT is_priority AND is_high_mod THEN RETURN ("review", "non-priority gene {gene} with {impact} impact")
-    ELSE RETURN ("exclude", "non-priority gene {gene} with {impact} impact")
+
+    STEP 0 - Clean the inputs (never modify row or params)
+        0.1  depth    = int(row["depth"])        # ValueError if not a whole number
+        0.2  quality  = int(row["quality"])      # ValueError if not a whole number
+        0.3  gene     = casefold(strip(row["gene"]))
+        0.4  impact   = casefold(strip(row["impact"]))
+        0.5  priority = set of casefold(strip(g)) for each g in params["priority_genes"]
+        0.6  is_priority = (gene IN priority)
+        0.7  is_high_mod = (impact IN {"high", "moderate"})
+
+    STEP 1 - Check the rules in order, first match decides
+        1. IF depth < params["min_depth"]:
+               RETURN ("exclude",
+                       "depth " + depth + " below min_depth " + params["min_depth"])
+
+        2. ELIF quality < params["min_quality"]:
+               RETURN ("exclude",
+                       "quality " + quality + " below min_quality " + params["min_quality"])
+
+        3. ELIF is_priority AND is_high_mod:
+               RETURN ("prioritize",
+                       "priority gene " + gene + " with " + impact + " impact")
+
+        4. ELIF is_priority AND NOT is_high_mod:        # low or modifier
+               RETURN ("review",
+                       "priority gene " + gene + " with " + impact + " impact")
+
+        5. ELIF NOT is_priority AND is_high_mod:
+               RETURN ("review",
+                       "non-priority gene " + gene + " with " + impact + " impact")
+
+        6. ELSE:                                        # not priority, low or modifier
+               RETURN ("exclude",
+                       "non-priority gene " + gene + " with " + impact + " impact")
 END FUNCTION
 ```
+
+
 
 ### 3. Hand trace
 
